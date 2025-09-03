@@ -33,34 +33,43 @@ st.header("2) Summaries & Entities")
 doc_ids = st.session_state.get("doc_ids", [])
 if doc_ids:
     selected = st.selectbox("Select a document id", doc_ids)
-    target_words = st.slider("Target summary length (words)", min_value=100, max_value=800, value=350, step=50)  # NEW
+    target_words = st.slider("Target summary length (words)", min_value=100, max_value=800, value=350, step=50)
     col1, col2 = st.columns(2)
 
     with col1:
-        c1, c2 = st.columns(2)
+        c1, c2, c3 = st.columns(3)
         with c1:
             if st.button("Get Summary"):
                 try:
                     r = requests.get(f"{API_BASE}/documents/{selected}/summary", timeout=60)
                     if r.status_code == 200:
-                        data = r.json()
-                        st.session_state["summary_data"] = data
+                        st.session_state["summary_data"] = r.json()
                     else:
                         st.error(r.text)
                 except Exception as e:
                     st.error(f"Error: {e}")
         with c2:
-            if st.button("Regenerate Summary"):
+            if st.button("Regenerate"):
                 try:
                     rr = requests.post(f"{API_BASE}/documents/{selected}/summarize", json={"target_words": target_words}, timeout=120)
                     if rr.status_code == 200:
                         st.success(f"Regenerated (~{target_words} words).")
-                        # refresh
                         r = requests.get(f"{API_BASE}/documents/{selected}/summary", timeout=60)
                         if r.status_code == 200:
                             st.session_state["summary_data"] = r.json()
                     else:
                         st.error(rr.text)
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        with c3:
+            if st.button("Validate Summary"):
+                try:
+                    rv = requests.post(f"{API_BASE}/documents/{selected}/summary/validate", timeout=60)
+                    if rv.status_code == 200:
+                        st.session_state["summary_validation"] = rv.json()["validation"]
+                        st.success("Validation complete.")
+                    else:
+                        st.error(rv.text)
                 except Exception as e:
                     st.error(f"Error: {e}")
 
@@ -75,6 +84,7 @@ if doc_ids:
                         if rr.status_code == 200:
                             st.success("Summary saved.")
                             st.session_state["summary_data"]["summary"] = edited
+                            st.session_state["summary_validation"] = rr.json().get("validation")
                         else:
                             st.error(rr.text)
                     except Exception as e:
@@ -86,13 +96,43 @@ if doc_ids:
             else:
                 st.error("Document not found.")
 
+        val = st.session_state.get("summary_validation")
+        with st.expander("Summary Validation"):
+            if val:
+                st.write(val)
+            else:
+                st.caption("No validation run yet.")
+
+        with st.expander("Summary Versions & Rollback"):
+            try:
+                lv = requests.get(f"{API_BASE}/documents/{selected}/summary/versions", timeout=60)
+                if lv.status_code == 200:
+                    versions = lv.json()
+                    if versions:
+                        st.table(versions)
+                        idx = st.number_input("Rollback to version index", min_value=0, max_value=len(versions)-1, value=0, step=1)
+                        if st.button("Rollback"):
+                            rb = requests.post(f"{API_BASE}/documents/{selected}/summary/rollback", params={"version_index": int(idx)}, timeout=60)
+                            if rb.status_code == 200:
+                                st.success("Rolled back.")
+                                r = requests.get(f"{API_BASE}/documents/{selected}/summary", timeout=60)
+                                if r.status_code == 200:
+                                    st.session_state["summary_data"] = r.json()
+                            else:
+                                st.error(rb.text)
+                    else:
+                        st.info("No versions yet.")
+                else:
+                    st.error(lv.text)
+            except Exception as e:
+                st.error(f"Error: {e}")
+
     with col2:
         if st.button("Get Entities"):
             try:
                 r = requests.get(f"{API_BASE}/documents/{selected}/entities", timeout=60)
                 if r.status_code == 200:
-                    edata = r.json()
-                    st.session_state["entities_data"] = edata
+                    st.session_state["entities_data"] = r.json()
                 else:
                     st.error(r.text)
             except Exception as e:
@@ -128,7 +168,9 @@ if st.button("Ask"):
             data = r.json()
             st.subheader("Answer")
             st.write(data["answer"])
-            st.caption(f"Sources: {', '.join(data['sources']) if data['sources'] else 'N/A'}")
+            st.caption(f"Sources: {', '.join(data.get('sources', [])) or 'N/A'}")
+            with st.expander("Answer Validation"):
+                st.write(data.get("validation", {}))
         else:
             st.error(r.text)
     except Exception as e:

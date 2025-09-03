@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from pathlib import Path
 import shutil
-from typing import Any
+from typing import Any, List
 
 from ..core.config import settings
 from ..core.logger import get_logger
@@ -12,7 +12,7 @@ from ..services.orchestrator import Orchestrator
 
 log = get_logger("api")
 
-app = FastAPI(title="Intelligent Docs API", version="0.3.0")  # bumped
+app = FastAPI(title="Intelligent Docs API", version="0.4.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,8 +41,8 @@ class SummaryResponse(BaseModel):
 class SummarySaveRequest(BaseModel):
     summary: str
 
-class SummarizeRequest(BaseModel):  # NEW
-    target_words: int = Field(ge=50, le=1200, default=settings.summary_words_default)
+class SummarizeRequest(BaseModel):
+    target_words: int = Field(ge=50, le=1200, default=getattr(settings, "summary_words_default", 350))
 
 class EntitiesResponse(BaseModel):
     status: str
@@ -53,11 +53,19 @@ class EntitiesSaveRequest(BaseModel):
 
 class QARequest(BaseModel):
     question: str
-    document_ids: list[str] | None = None
+    document_ids: List[str] | None = None
 
 class QAResponse(BaseModel):
     answer: str
-    sources: list[str] = []
+    sources: List[str] = []
+    validation: dict | None = None
+
+class VersionsResponseItem(BaseModel):
+    index: int
+    created_at: str
+    note: str | None = None
+    validation: dict | None = None
+    word_count: int | None = None
 
 SUPPORTED_TYPES = {".pdf", ".docx", ".txt", ".html", ".htm"}
 
@@ -85,13 +93,32 @@ async def save_summary(document_id: str, req: SummarySaveRequest):
     result = orchestrator.save_summary(document_id=document_id, summary=req.summary)
     if not result.get("ok"):
         raise HTTPException(status_code=404, detail="Document not found")
-    return {"ok": True}
+    return {"ok": True, "validation": result.get("validation")}
 
-@app.post("/documents/{document_id}/summarize")  # NEW
+@app.post("/documents/{document_id}/summarize")
 async def regenerate_summary(document_id: str, req: SummarizeRequest):
     ok = orchestrator.generate_summary(document_id=document_id, target_words=req.target_words)
     if not ok.get("ok"):
         raise HTTPException(status_code=404, detail=ok.get("error","regenerate_failed"))
+    return {"ok": True, "validation": ok.get("validation")}
+
+@app.post("/documents/{document_id}/summary/validate")
+async def validate_summary_route(document_id: str):
+    res = orchestrator.validate_current_summary(document_id=document_id)
+    if not res.get("ok"):
+        raise HTTPException(status_code=404, detail=res.get("error","not_found"))
+    return {"ok": True, "validation": res["validation"]}
+
+@app.get("/documents/{document_id}/summary/versions", response_model=List[VersionsResponseItem])
+async def list_summary_versions(document_id: str):
+    items = orchestrator.list_summary_versions(document_id=document_id)
+    return [VersionsResponseItem(**it) for it in items]
+
+@app.post("/documents/{document_id}/summary/rollback")
+async def rollback_summary(document_id: str, version_index: int = 0):
+    res = orchestrator.rollback_summary(document_id=document_id, version_index=version_index)
+    if not res.get("ok"):
+        raise HTTPException(status_code=404, detail="rollback_failed")
     return {"ok": True}
 
 @app.get("/documents/{document_id}/entities", response_model=EntitiesResponse)
@@ -105,7 +132,7 @@ async def save_entities(document_id: str, req: EntitiesSaveRequest):
 @app.post("/qa", response_model=QAResponse)
 async def qa(request: QARequest):
     result = orchestrator.answer_question(question=request.question, document_ids=request.document_ids)
-    return QAResponse(**result)
+    return QAResponse(answer=result["answer"], sources=result.get("sources", []), validation=result.get("validation"))
 
 @app.get("/health")
 async def health():

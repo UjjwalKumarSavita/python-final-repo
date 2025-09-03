@@ -1,3 +1,4 @@
+from pathlib import Path
 from .document_store import DocumentStore
 from ..core.logger import get_logger
 from ..core.config import settings
@@ -6,7 +7,8 @@ from .chunker import chunk_text
 from .vector_store import VectorStore
 from .summary_agent import SummaryAgent
 from .entity_extraction import extract_entities
-from pathlib import Path
+from .qa_agent import QAAgent
+from .validator_agent import validate_summary, validate_answer
 
 log = get_logger("orchestrator")
 
@@ -15,8 +17,9 @@ class Orchestrator:
         self.store = store
         self.vstore = VectorStore(dim=384)
         self.summarizer = SummaryAgent()
+        self.qa = QAAgent(self.vstore)
         self._entities: dict[str, dict] = {}
-        self.default_summary_words = settings.summary_words_default  # NEW
+        self.default_summary_words = settings.summary_words_default if hasattr(settings, "summary_words_default") else 350
 
     def _reparse_chunks(self, saved_path: str) -> list[str]:
         ext = Path(saved_path).suffix.lower()
@@ -30,8 +33,10 @@ class Orchestrator:
             chunks = self._reparse_chunks(saved_path)
             self.vstore.upsert_document(doc_id, chunks)
 
-            summary = self.summarizer.summarize(chunks, target_words=self.default_summary_words)  # UPDATED
-            self.store.set_summary(doc_id, summary)
+            summary = self.summarizer.summarize(chunks, target_words=self.default_summary_words)
+            # Validate and save as a version
+            val = validate_summary(summary, min_words=int(self.default_summary_words*0.6), max_words=int(self.default_summary_words*1.6))
+            self.store.push_summary_version(doc_id, summary, note="ingest_summary", validation=val)
 
             entities = extract_entities(summary)
             self._entities[doc_id] = entities
@@ -41,18 +46,18 @@ class Orchestrator:
             self.store.set_error(doc_id, f"Processing error: {e}")
         return doc_id
 
-    def generate_summary(self, *, document_id: str, target_words: int) -> dict:  # NEW
+    def generate_summary(self, *, document_id: str, target_words: int) -> dict:
         doc = self.store.get(document_id)
         if not doc:
             return {"ok": False, "error": "not_found"}
         try:
             chunks = self._reparse_chunks(doc.path)
-            # (Optional) keep vectors fresh if text changed
             self.vstore.upsert_document(document_id, chunks)
             summary = self.summarizer.summarize(chunks, target_words=target_words)
-            self.store.set_summary(document_id, summary)
+            val = validate_summary(summary, min_words=int(target_words*0.6), max_words=int(target_words*1.6))
+            self.store.push_summary_version(document_id, summary, note=f"regen_{target_words}", validation=val)
             self._entities[document_id] = extract_entities(summary)
-            return {"ok": True}
+            return {"ok": True, "validation": val}
         except Exception as e:
             log.exception("Regeneration error")
             self.store.set_error(document_id, f"Processing error: {e}")
@@ -68,9 +73,36 @@ class Orchestrator:
         doc = self.store.get(document_id)
         if not doc:
             return {"ok": False, "error": "not_found"}
-        self.store.set_summary(document_id, summary)
+        val = validate_summary(summary, min_words=int(self.default_summary_words*0.6), max_words=int(self.default_summary_words*1.6))
+        self.store.push_summary_version(document_id, summary, note="manual_save", validation=val)
         self._entities[document_id] = extract_entities(summary)
-        return {"ok": True}
+        return {"ok": True, "validation": val}
+
+    def validate_current_summary(self, *, document_id: str) -> dict:
+        doc = self.store.get(document_id)
+        if not doc or not doc.summary:
+            return {"ok": False, "error": "not_found_or_empty"}
+        val = validate_summary(doc.summary, min_words=int(self.default_summary_words*0.6), max_words=int(self.default_summary_words*1.6))
+        return {"ok": True, "validation": val}
+
+    def list_summary_versions(self, *, document_id: str) -> list[dict]:
+        doc = self.store.get(document_id)
+        if not doc:
+            return []
+        out = []
+        for idx, v in enumerate(self.store.list_summary_versions(document_id)):
+            out.append({
+                "index": idx,
+                "created_at": v.created_at,
+                "note": v.note,
+                "validation": v.validation,
+                "word_count": v.validation.get("word_count") if v.validation else None
+            })
+        return out
+
+    def rollback_summary(self, *, document_id: str, version_index: int) -> dict:
+        ok = self.store.rollback_summary(document_id, version_index)
+        return {"ok": ok}
 
     def get_entities(self, *, document_id: str) -> dict:
         if document_id in self._entities:
@@ -87,10 +119,8 @@ class Orchestrator:
         return {"ok": True}
 
     def answer_question(self, *, question: str, document_ids: list[str] | None) -> dict:
-        results = self.vstore.search(question, top_k=3)
-        context_snips = [r[3][:200] for r in results]
-        answer = (
-            "Stub answer (Milestone 3 will use an LLM over retrieved context).\n\n"
-            "Top matches:\n- " + "\n- ".join(context_snips)
-        )
-        return {"answer": answer, "sources": [f"{r[0]}:chunk{r[1]}" for r in results]}
+        # (document_ids filtering is future work; we search across all indexed docs for now)
+        result = self.qa.answer(question=question, top_k=5)
+        val = validate_answer(result["answer"], result.get("contexts", []))
+        result["validation"] = val
+        return result
