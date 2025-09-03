@@ -11,6 +11,7 @@ streamlit
 
 # Parsing
 pypdf
+PyPDF2
 python-docx
 beautifulsoup4
 lxml   # optional but recommended

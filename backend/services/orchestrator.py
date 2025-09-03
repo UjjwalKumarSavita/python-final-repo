@@ -9,6 +9,9 @@ from .summary_agent import SummaryAgent
 from .entity_extraction import extract_entities
 from .qa_agent import QAAgent
 from .validator_agent import validate_summary, validate_answer
+import time
+from .summary_agent import SummaryAgent
+from .entity_extraction import extract_entities
 
 log = get_logger("orchestrator")
 
@@ -46,7 +49,7 @@ class Orchestrator:
             self.store.set_error(doc_id, f"Processing error: {e}")
         return doc_id
 
-    def generate_summary(self, *, document_id: str, target_words: int) -> dict:
+    # def generate_summary(self, *, document_id: str, target_words: int) -> dict:
         doc = self.store.get(document_id)
         if not doc:
             return {"ok": False, "error": "not_found"}
@@ -62,6 +65,74 @@ class Orchestrator:
             log.exception("Regeneration error")
             self.store.set_error(document_id, f"Processing error: {e}")
             return {"ok": False, "error": "processing_error"}
+
+    def generate_summary(self, *, document_id: str, target_words: int, mode: str = "extractive_mmr", temperature: float = 0.2, seed: int | None = None) -> dict:
+        doc = self.store.get(document_id)
+        if not doc:
+            return {"ok": False, "error": "not_found"}
+        try:
+            chunks = self._reparse_chunks(doc.path)
+            self.vstore.upsert_document(document_id, chunks)
+            # compute entities first to feed to structured output
+            cur_summary = doc.summary or ""
+            ents = extract_entities(cur_summary) if cur_summary else {"names": [], "dates": [], "organizations": []}
+            seed_val = int(seed if seed is not None else time.time() % 10_000)
+            summary = self.summarizer.summarize(
+                chunks,
+                target_words=target_words,
+                mode=mode,
+                temperature=temperature,
+                seed=seed_val,
+                entities=(ents.get("names", []), ents.get("dates", []), ents.get("organizations", [])),
+            )
+            val = validate_summary(summary, min_words=int(target_words*0.6), max_words=int(target_words*1.6))
+            self.store.push_summary_version(document_id, summary, note=f"regen_{mode}_{target_words}_t{temperature}_seed{seed_val}", validation=val)
+            self._entities[document_id] = extract_entities(summary)
+            return {"ok": True, "validation": val, "summary": summary}
+        except Exception as e:
+            log.exception("Regeneration error")
+            self.store.set_error(document_id, f"Processing error: {e}")
+            return {"ok": False, "error": "processing_error"}
+
+    
+
+    # def generate_summary(self, *, document_id: str, target_words: int, mode: str = "extractive_mmr", temperature: float = 0.2, seed: int | None = None) -> dict:
+        doc = self.store.get(document_id)
+        if not doc:
+            return {"ok": False, "error": "not_found"}
+        try:
+            chunks = self._reparse_chunks(doc.path)
+            self.vstore.upsert_document(document_id, chunks)
+
+            # prepare entities (optional for formatting)
+            cur_summary = doc.summary or ""
+            ents = extract_entities(cur_summary) if cur_summary else {"names": [], "dates": [], "organizations": []}
+
+            # >>> ensure randomness when seed is None
+            seed_val = int(seed) if seed is not None else int(time.time() * 1000) % 1_000_000
+
+            summary = self.summarizer.summarize(
+                chunks,
+                target_words=target_words,
+                mode=mode,
+                temperature=temperature,
+                seed=seed_val,
+                entities=(ents.get("names", []), ents.get("dates", []), ents.get("organizations", [])),
+            )
+
+            val = validate_summary(summary, min_words=int(target_words*0.6), max_words=int(target_words*1.6))
+            self.store.push_summary_version(
+                document_id, summary,
+                note=f"regen_{mode}_{target_words}_t{temperature}_seed{seed_val}",
+                validation=val
+            )
+            self._entities[document_id] = extract_entities(summary)
+            return {"ok": True, "validation": val, "summary": summary, "seed": seed_val}  # return seed for debugging
+        except Exception as e:
+            log.exception("Regeneration error")
+            self.store.set_error(document_id, f"Processing error: {e}")
+            return {"ok": False, "error": "processing_error"}
+
 
     def get_summary(self, *, document_id: str) -> dict:
         doc = self.store.get(document_id)

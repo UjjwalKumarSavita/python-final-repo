@@ -49,18 +49,42 @@ if doc_ids:
                 except Exception as e:
                     st.error(f"Error: {e}")
         with c2:
+            # ui/app.py (inside the Regenerate click handling)
             if st.button("Regenerate"):
                 try:
-                    rr = requests.post(f"{API_BASE}/documents/{selected}/summarize", json={"target_words": target_words}, timeout=120)
+                    rr = requests.post(
+                        f"{API_BASE}/documents/{selected}/summarize",
+                        json={"target_words": target_words},
+                        timeout=120
+                    )
                     if rr.status_code == 200:
+                        payload = rr.json()
                         st.success(f"Regenerated (~{target_words} words).")
-                        r = requests.get(f"{API_BASE}/documents/{selected}/summary", timeout=60)
-                        if r.status_code == 200:
-                            st.session_state["summary_data"] = r.json()
+                        # directly update session with returned summary
+                        st.session_state["summary_data"] = {
+                            "document_id": selected,
+                            "status": "ready",
+                            "summary": payload.get("summary", "")
+                        }
+                        st.session_state["summary_validation"] = payload.get("validation")
                     else:
                         st.error(rr.text)
                 except Exception as e:
                     st.error(f"Error: {e}")
+
+
+            # if st.button("Regenerate"):
+            #     try:
+            #         rr = requests.post(f"{API_BASE}/documents/{selected}/summarize", json={"target_words": target_words}, timeout=120)
+            #         if rr.status_code == 200:
+            #             st.success(f"Regenerated (~{target_words} words).")
+            #             r = requests.get(f"{API_BASE}/documents/{selected}/summary", timeout=60)
+            #             if r.status_code == 200:
+            #                 st.session_state["summary_data"] = r.json()
+            #         else:
+            #             st.error(rr.text)
+            #     except Exception as e:
+            #         st.error(f"Error: {e}")
         with c3:
             if st.button("Validate Summary"):
                 try:

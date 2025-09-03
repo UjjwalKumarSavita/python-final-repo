@@ -95,12 +95,23 @@ async def save_summary(document_id: str, req: SummarySaveRequest):
         raise HTTPException(status_code=404, detail="Document not found")
     return {"ok": True, "validation": result.get("validation")}
 
+# @app.post("/documents/{document_id}/summarize")
+# async def regenerate_summary(document_id: str, req: SummarizeRequest):
+#     ok = orchestrator.generate_summary(document_id=document_id, target_words=req.target_words)
+#     if not ok.get("ok"):
+#         raise HTTPException(status_code=404, detail=ok.get("error","regenerate_failed"))
+#     return {"ok": True, "validation": ok.get("validation")}
+
+# backend/api/main.py (inside the same file)
 @app.post("/documents/{document_id}/summarize")
 async def regenerate_summary(document_id: str, req: SummarizeRequest):
     ok = orchestrator.generate_summary(document_id=document_id, target_words=req.target_words)
     if not ok.get("ok"):
         raise HTTPException(status_code=404, detail=ok.get("error","regenerate_failed"))
-    return {"ok": True, "validation": ok.get("validation")}
+    # fetch the latest summary so UI can refresh instantly
+    latest = orchestrator.get_summary(document_id=document_id)
+    return {"ok": True, "validation": ok.get("validation"), "summary": latest.get("summary")}
+
 
 @app.post("/documents/{document_id}/summary/validate")
 async def validate_summary_route(document_id: str):
