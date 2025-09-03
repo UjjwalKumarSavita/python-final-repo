@@ -1,6 +1,5 @@
 """
 Centralized configuration using environment variables.
-Keeps function signatures stable across modules.
 """
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -14,11 +13,14 @@ class Settings(BaseModel):
     api_port: int = int(os.getenv("API_PORT", "8000"))
     cors_origins: list[str] = os.getenv("CORS_ORIGINS", "http://localhost:8501").split(",")
 
-    # Future (Milestone 2+): swap in Postgres/pgvector
+    # Optional database (pgvector)
     database_url: str | None = os.getenv("DATABASE_URL")
 
-    # Future (Milestone 5): LangSmith / MCP
-    langsmith_api_key: str | None = os.getenv("LANGSMITH_API_KEY")
-    langsmith_project: str | None = os.getenv("LANGSMITH_PROJECT")
+    # Optional LLM
+    llm_provider: str | None = os.getenv("LLM_PROVIDER")
+    openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
+
+    # NEW: default summary length (words)
+    summary_words_default: int = int(os.getenv("SUMMARY_WORDS_DEFAULT", "350"))
 
 settings = Settings()

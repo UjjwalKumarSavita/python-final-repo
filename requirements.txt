@@ -1,7 +1,23 @@
+# Core backend
 fastapi
 uvicorn
 pydantic
 python-dotenv
-streamlit
 requests
-python-multipart   # needed for file upload endpoints
+python-multipart
+
+# UI
+streamlit
+
+# Parsing
+pypdf
+python-docx
+beautifulsoup4
+lxml   # optional but recommended
+
+
+# Lightweight numeric ops (embeddings + similarity)
+numpy
+
+# Optional: Postgres + pgvector (comment out if not using DB now)
+psycopg[binary]>=3.2
