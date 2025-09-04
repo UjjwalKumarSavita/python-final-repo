@@ -1,0 +1,134 @@
+{"ts": "2025-09-04T16:58:18", "kind": "http", "payload": {"path": "/", "method": "GET", "ms": 0.39}}
+{"ts": "2025-09-04T16:58:18", "kind": "http", "payload": {"path": "/favicon.ico", "method": "GET", "ms": 0.23}}
+{"ts": "2025-09-04T16:58:29", "kind": "http", "payload": {"path": "/docs", "method": "GET", "ms": 0.22}}
+{"ts": "2025-09-04T16:58:29", "kind": "http", "payload": {"path": "/openapi.json", "method": "GET", "ms": 10.86}}
+{"ts": "2025-09-04T16:59:57", "kind": "ingest", "payload": {"doc_id": "fd00194f-df35-43a7-a081-fed024c3d613", "filename": "eassay on education nad popular culture.pdf"}}
+{"ts": "2025-09-04T16:59:57", "kind": "http", "payload": {"path": "/documents", "method": "POST", "ms": 1853.21}}
+{"ts": "2025-09-04T16:59:57", "kind": "http", "payload": {"path": "/documents/fd00194f-df35-43a7-a081-fed024c3d613/summary/versions", "method": "GET", "ms": 0.29}}
+{"ts": "2025-09-04T16:59:57", "kind": "error", "payload": {"path": "/documents/fd00194f-df35-43a7-a081-fed024c3d613/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T17:00:00", "kind": "http", "payload": {"path": "/documents/fd00194f-df35-43a7-a081-fed024c3d613/summary", "method": "GET", "ms": 0.38}}
+{"ts": "2025-09-04T17:00:00", "kind": "http", "payload": {"path": "/documents/fd00194f-df35-43a7-a081-fed024c3d613/summary/versions", "method": "GET", "ms": 0.48}}
+{"ts": "2025-09-04T17:00:00", "kind": "error", "payload": {"path": "/documents/fd00194f-df35-43a7-a081-fed024c3d613/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T17:00:57", "kind": "ingest", "payload": {"doc_id": "f3256bd0-3469-4851-a6c6-1fc81541b9c6", "filename": "statement of purpose.pdf"}}
+{"ts": "2025-09-04T17:00:57", "kind": "http", "payload": {"path": "/documents", "method": "POST", "ms": 398.95}}
+{"ts": "2025-09-04T17:00:57", "kind": "http", "payload": {"path": "/documents/f3256bd0-3469-4851-a6c6-1fc81541b9c6/summary/versions", "method": "GET", "ms": 0.4}}
+{"ts": "2025-09-04T17:00:57", "kind": "error", "payload": {"path": "/documents/f3256bd0-3469-4851-a6c6-1fc81541b9c6/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T17:00:59", "kind": "http", "payload": {"path": "/documents/f3256bd0-3469-4851-a6c6-1fc81541b9c6/summary", "method": "GET", "ms": 0.46}}
+{"ts": "2025-09-04T17:00:59", "kind": "http", "payload": {"path": "/documents/f3256bd0-3469-4851-a6c6-1fc81541b9c6/summary/versions", "method": "GET", "ms": 0.38}}
+{"ts": "2025-09-04T17:00:59", "kind": "error", "payload": {"path": "/documents/f3256bd0-3469-4851-a6c6-1fc81541b9c6/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T17:01:04", "kind": "summary_save", "payload": {"doc_id": "f3256bd0-3469-4851-a6c6-1fc81541b9c6"}}
+{"ts": "2025-09-04T17:01:04", "kind": "http", "payload": {"path": "/documents/f3256bd0-3469-4851-a6c6-1fc81541b9c6/summary", "method": "POST", "ms": 2.31}}
+{"ts": "2025-09-04T17:01:08", "kind": "http", "payload": {"path": "/documents/f3256bd0-3469-4851-a6c6-1fc81541b9c6/summary/versions", "method": "GET", "ms": 0.37}}
+{"ts": "2025-09-04T17:01:08", "kind": "error", "payload": {"path": "/documents/f3256bd0-3469-4851-a6c6-1fc81541b9c6/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:34:38", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.61}}
+{"ts": "2025-09-04T18:34:55", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.66}}
+{"ts": "2025-09-04T18:34:59", "kind": "ingest", "payload": {"doc_id": "9ba56081-7d79-4edd-a6af-3c09ebac9800", "filename": "eassay on education nad popular culture.pdf"}}
+{"ts": "2025-09-04T18:34:59", "kind": "http", "payload": {"path": "/documents", "method": "POST", "ms": 2393.29}}
+{"ts": "2025-09-04T18:34:59", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "method": "GET", "ms": 0.33}}
+{"ts": "2025-09-04T18:34:59", "kind": "error", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:34:59", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.79}}
+{"ts": "2025-09-04T18:35:13", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "method": "GET", "ms": 0.36}}
+{"ts": "2025-09-04T18:35:13", "kind": "error", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:35:13", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.95}}
+{"ts": "2025-09-04T18:35:15", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary", "method": "GET", "ms": 0.43}}
+{"ts": "2025-09-04T18:35:15", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "method": "GET", "ms": 0.22}}
+{"ts": "2025-09-04T18:35:15", "kind": "error", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:35:15", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.43}}
+{"ts": "2025-09-04T18:35:27", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "method": "GET", "ms": 0.39}}
+{"ts": "2025-09-04T18:35:27", "kind": "error", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:35:27", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 1.21}}
+{"ts": "2025-09-04T18:35:28", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary", "method": "GET", "ms": 0.72}}
+{"ts": "2025-09-04T18:35:29", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "method": "GET", "ms": 0.38}}
+{"ts": "2025-09-04T18:35:29", "kind": "error", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:35:29", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.66}}
+{"ts": "2025-09-04T18:35:30", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary", "method": "GET", "ms": 0.35}}
+{"ts": "2025-09-04T18:35:30", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "method": "GET", "ms": 0.21}}
+{"ts": "2025-09-04T18:35:30", "kind": "error", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:35:30", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.36}}
+{"ts": "2025-09-04T18:35:32", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary", "method": "GET", "ms": 0.44}}
+{"ts": "2025-09-04T18:35:32", "kind": "http", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "method": "GET", "ms": 0.75}}
+{"ts": "2025-09-04T18:35:32", "kind": "error", "payload": {"path": "/documents/9ba56081-7d79-4edd-a6af-3c09ebac9800/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:35:32", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 1.0}}
+{"ts": "2025-09-04T18:38:50", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.42}}
+{"ts": "2025-09-04T18:39:21", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.96}}
+{"ts": "2025-09-04T18:39:25", "kind": "ingest", "payload": {"doc_id": "7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf", "filename": "eassay on education nad popular culture.pdf"}}
+{"ts": "2025-09-04T18:39:25", "kind": "http", "payload": {"path": "/documents", "method": "POST", "ms": 1821.92}}
+{"ts": "2025-09-04T18:39:25", "kind": "http", "payload": {"path": "/documents/7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf/summary/versions", "method": "GET", "ms": 0.25}}
+{"ts": "2025-09-04T18:39:25", "kind": "error", "payload": {"path": "/documents/7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:39:25", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.59}}
+{"ts": "2025-09-04T18:39:34", "kind": "http", "payload": {"path": "/documents/7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf/summary", "method": "GET", "ms": 0.88}}
+{"ts": "2025-09-04T18:39:35", "kind": "http", "payload": {"path": "/documents/7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf/summary/versions", "method": "GET", "ms": 0.66}}
+{"ts": "2025-09-04T18:39:35", "kind": "error", "payload": {"path": "/documents/7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:39:35", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.81}}
+{"ts": "2025-09-04T18:40:02", "kind": "summary_save", "payload": {"doc_id": "7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf"}}
+{"ts": "2025-09-04T18:40:02", "kind": "http", "payload": {"path": "/documents/7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf/summary", "method": "POST", "ms": 3.42}}
+{"ts": "2025-09-04T18:40:02", "kind": "http", "payload": {"path": "/documents/7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf/export/summary.pdf", "method": "GET", "ms": 13.46}}
+{"ts": "2025-09-04T18:40:03", "kind": "http", "payload": {"path": "/documents/7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf/summary/versions", "method": "GET", "ms": 0.44}}
+{"ts": "2025-09-04T18:40:03", "kind": "error", "payload": {"path": "/documents/7bd2e5fe-363a-4a2e-9bdb-e64bc9b0fbbf/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:40:03", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.73}}
+{"ts": "2025-09-04T18:40:22", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.51}}
+{"ts": "2025-09-04T18:40:31", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.57}}
+{"ts": "2025-09-04T18:40:34", "kind": "ingest", "payload": {"doc_id": "da99d72b-4de6-4ff7-ba06-33166f3f10dd", "filename": "eassay on education nad popular culture.pdf"}}
+{"ts": "2025-09-04T18:40:34", "kind": "http", "payload": {"path": "/documents", "method": "POST", "ms": 1759.06}}
+{"ts": "2025-09-04T18:40:34", "kind": "http", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "method": "GET", "ms": 0.26}}
+{"ts": "2025-09-04T18:40:34", "kind": "error", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:40:34", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.71}}
+{"ts": "2025-09-04T18:40:58", "kind": "http", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary", "method": "GET", "ms": 0.37}}
+{"ts": "2025-09-04T18:40:58", "kind": "http", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "method": "GET", "ms": 0.31}}
+{"ts": "2025-09-04T18:40:58", "kind": "error", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:40:58", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.48}}
+{"ts": "2025-09-04T18:41:03", "kind": "summary_save", "payload": {"doc_id": "da99d72b-4de6-4ff7-ba06-33166f3f10dd"}}
+{"ts": "2025-09-04T18:41:03", "kind": "http", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary", "method": "POST", "ms": 4.61}}
+{"ts": "2025-09-04T18:41:03", "kind": "http", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/export/summary.pdf", "method": "GET", "ms": 17.42}}
+{"ts": "2025-09-04T18:41:03", "kind": "http", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "method": "GET", "ms": 0.24}}
+{"ts": "2025-09-04T18:41:03", "kind": "error", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:41:03", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.48}}
+{"ts": "2025-09-04T18:41:13", "kind": "http", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "method": "GET", "ms": 0.59}}
+{"ts": "2025-09-04T18:41:13", "kind": "error", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:41:13", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 1.4}}
+{"ts": "2025-09-04T18:41:27", "kind": "http", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "method": "GET", "ms": 0.36}}
+{"ts": "2025-09-04T18:41:27", "kind": "error", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:41:27", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.7}}
+{"ts": "2025-09-04T18:41:27", "kind": "http", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "method": "GET", "ms": 0.43}}
+{"ts": "2025-09-04T18:41:28", "kind": "error", "payload": {"path": "/documents/da99d72b-4de6-4ff7-ba06-33166f3f10dd/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:41:28", "kind": "qa", "payload": {"question": "what is culture", "sources": ["da99d72b-4de6-4ff7-ba06-33166f3f10dd:chunk51", "da99d72b-4de6-4ff7-ba06-33166f3f10dd:chunk40", "da99d72b-4de6-4ff7-ba06-33166f3f10dd:chunk50", "da99d72b-4de6-4ff7-ba06-33166f3f10dd:chunk53", "da99d72b-4de6-4ff7-ba06-33166f3f10dd:chunk60"], "score": 0.99}}
+{"ts": "2025-09-04T18:41:28", "kind": "http", "payload": {"path": "/qa", "method": "POST", "ms": 4.98}}
+{"ts": "2025-09-04T18:41:28", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.86}}
+{"ts": "2025-09-04T18:42:54", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.4}}
+{"ts": "2025-09-04T18:43:07", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.43}}
+{"ts": "2025-09-04T18:43:09", "kind": "ingest", "payload": {"doc_id": "d2539812-6a74-4154-b974-c4fa497f81c1", "filename": "statement of purpose.pdf"}}
+{"ts": "2025-09-04T18:43:09", "kind": "http", "payload": {"path": "/documents", "method": "POST", "ms": 331.9}}
+{"ts": "2025-09-04T18:43:09", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "method": "GET", "ms": 0.42}}
+{"ts": "2025-09-04T18:43:09", "kind": "error", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:43:09", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.38}}
+{"ts": "2025-09-04T18:43:16", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary", "method": "GET", "ms": 0.76}}
+{"ts": "2025-09-04T18:43:16", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "method": "GET", "ms": 0.25}}
+{"ts": "2025-09-04T18:43:16", "kind": "error", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:43:16", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.37}}
+{"ts": "2025-09-04T18:43:37", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "method": "GET", "ms": 0.22}}
+{"ts": "2025-09-04T18:43:37", "kind": "error", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:43:37", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 1.19}}
+{"ts": "2025-09-04T18:43:37", "kind": "summary_save", "payload": {"doc_id": "d2539812-6a74-4154-b974-c4fa497f81c1"}}
+{"ts": "2025-09-04T18:43:37", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary", "method": "POST", "ms": 3.62}}
+{"ts": "2025-09-04T18:43:37", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/export/summary.pdf", "method": "GET", "ms": 16.66}}
+{"ts": "2025-09-04T18:43:37", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "method": "GET", "ms": 0.46}}
+{"ts": "2025-09-04T18:43:37", "kind": "error", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:43:37", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.7}}
+{"ts": "2025-09-04T18:43:39", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "method": "GET", "ms": 0.6}}
+{"ts": "2025-09-04T18:43:39", "kind": "error", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:43:39", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.52}}
+{"ts": "2025-09-04T18:43:49", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/validate", "method": "POST", "ms": 0.51}}
+{"ts": "2025-09-04T18:43:49", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "method": "GET", "ms": 0.24}}
+{"ts": "2025-09-04T18:43:49", "kind": "error", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:43:49", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.82}}
+{"ts": "2025-09-04T18:44:05", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/validate", "method": "POST", "ms": 0.53}}
+{"ts": "2025-09-04T18:44:05", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "method": "GET", "ms": 0.23}}
+{"ts": "2025-09-04T18:44:05", "kind": "error", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:44:05", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.46}}
+{"ts": "2025-09-04T18:44:07", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "method": "GET", "ms": 0.23}}
+{"ts": "2025-09-04T18:44:07", "kind": "error", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/summary/versions", "error": "'DocumentRecord' object has no attribute 'versions'"}}
+{"ts": "2025-09-04T18:44:07", "kind": "http", "payload": {"path": "/documents/d2539812-6a74-4154-b974-c4fa497f81c1/entities", "method": "GET", "ms": 5.34}}
+{"ts": "2025-09-04T18:44:07", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.41}}
+{"ts": "2025-09-04T18:56:24", "kind": "http", "payload": {"path": "/health", "method": "GET", "ms": 0.26}}
+{"ts": "2025-09-04T19:00:16", "kind": "http", "payload": {"path": "/health", "method": "GET", "ms": 0.24}}
+{"ts": "2025-09-04T19:00:47", "kind": "http", "payload": {"path": "/qa/history", "method": "GET", "ms": 0.49}}

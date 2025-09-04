@@ -168,15 +168,15 @@ def _format_structured(summary_body: str, names: List[str], dates: List[str], or
     return (
         "## Overview\n"
         f"{summary_body.strip()}\n\n"
-        "## Key Points\n"
-        "- Summarized for quick review\n\n"
-        "## Dates\n"
-        f"{bullets(dates)}\n\n"
-        "## Entities\n"
-        f"**Names**:\n{bullets(names)}\n\n"
-        f"**Organizations**:\n{bullets(orgs)}\n\n"
-        "## Risks / Open Questions\n"
-        "- (add any risks, ambiguities, or follow-ups here)"
+        # "## Key Points\n"
+        # "- Summarized for quick review\n\n"
+        # "## Dates\n"
+        # f"{bullets(dates)}\n\n"
+        # "## Entities\n"
+        # f"**Names**:\n{bullets(names)}\n\n"
+        # f"**Organizations**:\n{bullets(orgs)}\n\n"
+        # "## Risks / Open Questions\n"
+        # "- (add any risks, ambiguities, or follow-ups here)"
     )
 
 class SummaryAgent:

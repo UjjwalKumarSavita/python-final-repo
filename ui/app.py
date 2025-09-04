@@ -12,7 +12,7 @@ st.sidebar.header("Status & Settings")
 st.sidebar.write(f"API: {API_BASE}")
 
 # ---------------- Upload ----------------
-st.header("1) Upload Document")
+st.header("Upload Document")
 uploaded = st.file_uploader("Choose a file (.pdf, .docx, .txt, .html)", type=["pdf","docx","txt","html"])
 if st.button("Upload", type="primary") and uploaded:
     files = {"file": (uploaded.name, uploaded.getvalue(), uploaded.type)}
@@ -29,11 +29,17 @@ if st.button("Upload", type="primary") and uploaded:
 
 # ---------------- Summaries & Entities ----------------
 st.divider()
-st.header("2) Summaries & Entities")
+st.header("Summaries & Entities")
 doc_ids = st.session_state.get("doc_ids", [])
 if doc_ids:
     selected = st.selectbox("Select a document id", doc_ids)
     target_words = st.slider("Target summary length (words)", min_value=100, max_value=800, value=350, step=50)
+
+    # Add Autogen mode & gen settings
+    # mode = st.selectbox("Summary mode", options=["extractive_mmr", "abstractive", "autogen"], index=0)
+    # temperature = st.slider("Temperature (LLM/Autogen only)", min_value=0.0, max_value=1.0, value=0.2, step=0.1)
+    # seed = st.number_input("Seed (optional; leave 0 for random)", min_value=0, max_value=1_000_000, value=0, step=1)
+
     col1, col2 = st.columns(2)
 
     with col1:
@@ -49,42 +55,21 @@ if doc_ids:
                 except Exception as e:
                     st.error(f"Error: {e}")
         with c2:
-            # ui/app.py (inside the Regenerate click handling)
             if st.button("Regenerate"):
                 try:
-                    rr = requests.post(
-                        f"{API_BASE}/documents/{selected}/summarize",
-                        json={"target_words": target_words},
-                        timeout=120
-                    )
+                    payload = {"target_words": target_words, "mode": mode, "temperature": float(temperature)}
+                    if seed and int(seed) > 0:
+                        payload["seed"] = int(seed)
+                    rr = requests.post(f"{API_BASE}/documents/{selected}/summarize", json=payload, timeout=180)
                     if rr.status_code == 200:
-                        payload = rr.json()
-                        st.success(f"Regenerated (~{target_words} words).")
-                        # directly update session with returned summary
-                        st.session_state["summary_data"] = {
-                            "document_id": selected,
-                            "status": "ready",
-                            "summary": payload.get("summary", "")
-                        }
-                        st.session_state["summary_validation"] = payload.get("validation")
+                        data = rr.json()
+                        st.success(f"Regenerated (~{target_words} words). seed={data.get('seed')}")
+                        st.session_state["summary_data"] = {"document_id": selected, "status": "ready", "summary": data.get("summary", "")}
+                        st.session_state["summary_validation"] = data.get("validation")
                     else:
                         st.error(rr.text)
                 except Exception as e:
                     st.error(f"Error: {e}")
-
-
-            # if st.button("Regenerate"):
-            #     try:
-            #         rr = requests.post(f"{API_BASE}/documents/{selected}/summarize", json={"target_words": target_words}, timeout=120)
-            #         if rr.status_code == 200:
-            #             st.success(f"Regenerated (~{target_words} words).")
-            #             r = requests.get(f"{API_BASE}/documents/{selected}/summary", timeout=60)
-            #             if r.status_code == 200:
-            #                 st.session_state["summary_data"] = r.json()
-            #         else:
-            #             st.error(rr.text)
-            #     except Exception as e:
-            #         st.error(f"Error: {e}")
         with c3:
             if st.button("Validate Summary"):
                 try:
@@ -109,6 +94,19 @@ if doc_ids:
                             st.success("Summary saved.")
                             st.session_state["summary_data"]["summary"] = edited
                             st.session_state["summary_validation"] = rr.json().get("validation")
+
+                            # 🔽 NEW: immediately fetch PDF bytes and show a download button
+                            pdf_resp = requests.get(f"{API_BASE}/documents/{selected}/export/summary.pdf", timeout=60)
+                            if pdf_resp.status_code == 200:
+                                st.download_button(
+                                    "Download Summary PDF",
+                                    data=pdf_resp.content,
+                                    file_name=f"summary_{selected}.pdf",
+                                    mime="application/pdf",
+                                    use_container_width=True,
+                                )
+                            else:
+                                st.info("PDF not ready yet. Try the Export section below.")
                         else:
                             st.error(rr.text)
                     except Exception as e:
@@ -199,3 +197,62 @@ if st.button("Ask"):
             st.error(r.text)
     except Exception as e:
         st.error(f"Error: {e}")
+
+# ---------------- History & Exports ----------------
+st.divider()
+st.header("4) History & Export")
+colA, colB = st.columns(2)
+with colA:
+    st.subheader("Q&A History")
+    try:
+        hr = requests.get(f"{API_BASE}/qa/history", params={"limit": 50}, timeout=30)
+        if hr.status_code == 200:
+            items = hr.json().get("items", [])
+            if not items:
+                st.caption("No Q&A yet.")
+            else:
+                for it in items:
+                    with st.expander(f"Q: {it['question']}"):
+                        st.write(it["answer"])
+                        st.caption(f"Sources: {', '.join(it.get('sources', [])) or 'N/A'}")
+                        st.code(it.get("validation", {}), language="json")
+        else:
+            st.error(hr.text)
+    except Exception as e:
+        st.error(f"Error: {e}")
+
+with colB:
+    st.subheader("Export current document")
+    if doc_ids:
+        selected_exp = st.selectbox("Document to export", doc_ids, key="export_doc")
+        c1, c2, c3 = st.columns(3)
+        # with c1:
+        #     if st.button("Download Summary (.md)"):
+        #         try:
+        #             rr = requests.get(f"{API_BASE}/documents/{selected_exp}/export/summary.md", timeout=30)
+        #             if rr.status_code == 200:
+        #                 st.download_button("Save summary.md", data=rr.text, file_name="summary.md", mime="text/markdown")
+        #             else:
+        #                 st.error(rr.text)
+        #         except Exception as e:
+        #             st.error(f"Error: {e}")
+        with c2:
+            if st.button("Download Entities (.json)"):
+                try:
+                    rr = requests.get(f"{API_BASE}/documents/{selected_exp}/export/entities.json", timeout=30)
+                    if rr.status_code == 200:
+                        st.download_button("Save entities.json", data=rr.text, file_name="entities.json", mime="application/json")
+                    else:
+                        st.error(rr.text)
+                except Exception as e:
+                    st.error(f"Error: {e}")
+        with c3:
+            if st.button("Download Summary (.pdf)"):
+                try:
+                    rr = requests.get(f"{API_BASE}/documents/{selected_exp}/export/summary.pdf", timeout=30)
+                    if rr.status_code == 200:
+                        st.download_button("Save summary.pdf", data=rr.content, file_name="summary.pdf", mime="application/pdf")
+                    else:
+                        st.error(rr.text)
+                except Exception as e:
+                    st.error(f"Error: {e}")
