@@ -17,6 +17,7 @@ from typing import Optional
 
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.agents import AssistantAgent
+# from autogen_agentchat.groupchat import GroupChat, GroupChatManager
 from autogen_agentchat.groupchat import GroupChat, GroupChatManager
 from autogen_agentchat.messages import TextMessage
 from autogen_agentchat.conditions import MaxMessageTermination
