@@ -1350,4 +1350,429 @@ streamlit run ui/app.py
 
 Upload files / regenerate summaries / ask Q&A as normal — now backed by pgvector.
 
-If you want, I can also give you a reverse migrator (pgvector → JSON dumps) for backups, but the above is everything you need to get persistent embeddings + keys wired up cleanly.
+
+
+
+
+
+
+
+If you want, I can also give you a reverse migrator (pgvector → JSON dumps) for backups, but the above is everything you need to get persistent embeddings + keys wired up cleanly
+
+
+
+
+
+
+
+
+
+
+
+
+
+requirements.txt
+fastapi
+uvicorn
+python-multipart
+
+streamlit
+requests
+
+pydantic
+pydantic-settings
+
+numpy
+beautifulsoup4
+python-docx
+pypdf
+cryptography
+
+# pgvector (Postgres) support
+psycopg[binary]
+pgvector
+
+.env.example
+# --- App ---
+APP_ENV=dev
+API_HOST=127.0.0.1
+API_PORT=8000
+CORS_ORIGINS=*
+
+# Default target summary length
+SUMMARY_WORDS_DEFAULT=350
+
+# --- Vector store selection ---
+# 1 = use Postgres pgvector, 0 = in-memory
+USE_PGVECTOR=1
+
+# If USE_PGVECTOR=1, set DB URL and dimension:
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@127.0.0.1:5432/mydb
+PGVECTOR_DIM=384
+
+# --- Optional LLM for abstractive summaries (OpenAI / Azure OpenAI) ---
+LLM_PROVIDER=openai
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_BASE_URL=
+OPENAI_API_VERSION=
+
+backend/services/vector_store_pg.py
+from __future__ import annotations
+import os, math
+from typing import List, Tuple
+import psycopg
+from .embeddings import HashedEmbeddings
+
+def _l2_normalize(v: List[float]) -> List[float]:
+    s = math.sqrt(sum(x*x for x in v)) or 1.0
+    return [x / s for x in v]
+
+def _vec_lit(v: List[float]) -> str:
+    # vector literal for pgvector: '[0.1, 0.2, ...]'
+    return "[" + ",".join(f"{x:.6f}" for x in v) + "]"
+
+class PgVectorStore:
+    """
+    Minimal pgvector-backed store.
+    Matches the in-memory store interface:
+      - upsert_document(doc_id, chunks)
+      - delete_document(doc_id)
+      - search(query, top_k) -> [(doc_id, chunk_idx, score, content), ...]
+    Requires schema (run in your DB):
+        CREATE EXTENSION IF NOT EXISTS vector;
+        CREATE TABLE IF NOT EXISTS chunks (
+          doc_id TEXT NOT NULL,
+          chunk_idx INT NOT NULL,
+          content TEXT NOT NULL,
+          embedding VECTOR(384) NOT NULL,
+          PRIMARY KEY (doc_id, chunk_idx)
+        );
+        CREATE INDEX IF NOT EXISTS idx_chunks_embedding_ivf
+          ON chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+        ANALYZE chunks;
+    """
+    def __init__(self, dim: int | None = None, dsn: str | None = None) -> None:
+        self.dim = int(dim or os.getenv("PGVECTOR_DIM", "384"))
+        self.dsn = dsn or os.getenv("DATABASE_URL")
+        if not self.dsn:
+            raise RuntimeError("DATABASE_URL not set")
+        self.conn = psycopg.connect(self.dsn, autocommit=True)
+        self.embedder = HashedEmbeddings(dim=self.dim)
+        # safe if already enabled
+        with self.conn.cursor() as cur:
+            cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+
+    def upsert_document(self, doc_id: str, chunks: List[str]) -> None:
+        if not chunks:
+            return
+        embs = self.embedder.embed_texts(chunks)
+        embs = [_l2_normalize(list(map(float, e))) for e in embs]
+        with self.conn.cursor() as cur:
+            cur.execute("DELETE FROM chunks WHERE doc_id=%s", (doc_id,))
+            for i, (content, emb) in enumerate(zip(chunks, embs)):
+                cur.execute(
+                    "INSERT INTO chunks (doc_id, chunk_idx, content, embedding) VALUES (%s, %s, %s, %s::vector)",
+                    (doc_id, i, content, _vec_lit(emb)),
+                )
+
+    def delete_document(self, doc_id: str) -> None:
+        with self.conn.cursor() as cur:
+            cur.execute("DELETE FROM chunks WHERE doc_id=%s", (doc_id,))
+
+    def search(self, query: str, top_k: int = 5) -> List[Tuple[str, int, float, str]]:
+        q = self.embedder.embed_texts([query])[0]
+        q = _l2_normalize(list(map(float, q)))
+        with self.conn.cursor() as cur:
+            # cosine distance operator `<=>` (smaller = closer). Convert to similarity: 1 - dist
+            cur.execute(
+                """
+                SELECT doc_id, chunk_idx, content, (1 - (embedding <=> %s::vector)) AS sim
+                FROM chunks
+                ORDER BY embedding <=> %s::vector
+                LIMIT %s
+                """,
+                (_vec_lit(q), _vec_lit(q), top_k),
+            )
+            rows = cur.fetchall()
+        return [(r[0], int(r[1]), float(r[3]), r[2]) for r in rows]
+
+backend/api/main.py
+from __future__ import annotations
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from pathlib import Path
+import shutil
+from typing import Any, List
+import os
+import time
+
+from ..core.config import settings
+from ..core.logger import get_logger
+from ..services.document_store import DocumentStore
+from ..services.parser import parse_file
+from ..services.chunker import chunk_text
+from ..services.summary_agent import SummaryAgent
+from ..services.entity_extraction import extract_entities
+from ..services.validator_agent import validate_summary, validate_answer
+from ..services.vector_store import VectorStore
+from ..services.vector_store_pg import PgVectorStore
+from ..services.qa_agent import QAAgent
+
+log = get_logger("api")
+
+app = FastAPI(title="Intelligent Docs API", version="0.4.1")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.parsed_cors(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+UPLOAD_DIR = Path(__file__).resolve().parent.parent / "data" / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+store = DocumentStore()
+summarizer = SummaryAgent()
+
+# vector store selection (env or settings)
+use_pg = str(settings.use_pgvector) == "1" or os.getenv("USE_PGVECTOR") == "1"
+vstore = PgVectorStore(dim=settings.pgvector_dim) if use_pg else VectorStore(dim=settings.pgvector_dim)
+qa = QAAgent(vstore)
+
+class DocumentCreateResponse(BaseModel):
+    document_id: str
+    filename: str
+    status: str = "pending"
+
+class SummaryResponse(BaseModel):
+    document_id: str
+    status: str = Field(description="pending | ready | error | not_found")
+    summary: str | None = None
+
+class SummarySaveRequest(BaseModel):
+    summary: str
+
+class SummarizeRequest(BaseModel):
+    target_words: int = Field(ge=50, le=1200, default=settings.summary_words_default)
+    mode: str = Field(default="extractive_mmr")  # or "abstractive"
+    temperature: float = Field(ge=0.0, le=1.0, default=0.2)
+    seed: int | None = None
+
+class EntitiesResponse(BaseModel):
+    status: str
+    entities: dict[str, Any] | None = None
+
+class EntitiesSaveRequest(BaseModel):
+    entities: dict[str, Any]
+
+class QARequest(BaseModel):
+    question: str
+    document_ids: List[str] | None = None
+
+class QAResponse(BaseModel):
+    answer: str
+    sources: List[str] = []
+    validation: dict | None = None
+
+SUPPORTED_TYPES = {".pdf", ".docx", ".txt", ".html", ".htm"}
+
+@app.get("/health")
+async def health():
+    return {"ok": True, "env": settings.app_env}
+
+@app.post("/documents", response_model=DocumentCreateResponse)
+async def upload_document(file: UploadFile = File(...)):
+    ext = Path(file.filename).suffix.lower()
+    if ext not in SUPPORTED_TYPES:
+        raise HTTPException(status_code=415, detail=f"Unsupported file type: {ext}")
+
+    dest = UPLOAD_DIR / file.filename
+    with dest.open("wb") as f:
+        shutil.copyfileobj(file.file, f)
+
+    doc_id = store.add_document(filename=file.filename, path=str(dest))
+
+    try:
+        text = parse_file(str(dest), ext)
+        chunks = chunk_text(text)
+        vstore.upsert_document(doc_id, chunks)
+
+        target = settings.summary_words_default
+        summary = summarizer.summarize(chunks, target_words=target)
+        val = validate_summary(summary, min_words=int(target*0.6), max_words=int(target*1.6))
+        store.push_summary_version(doc_id, summary, note="ingest_summary", validation=val)
+        status = "ready"
+    except Exception as e:
+        log.exception("Processing error")
+        store.set_error(doc_id, f"Processing error: {e}")
+        status = "error"
+
+    return DocumentCreateResponse(document_id=doc_id, filename=file.filename, status=status)
+
+@app.get("/documents/{document_id}/summary", response_model=SummaryResponse)
+async def get_summary(document_id: str):
+    doc = store.get(document_id)
+    if not doc:
+        return SummaryResponse(document_id=document_id, status="not_found", summary=None)
+    if doc.status == "error":
+        return SummaryResponse(document_id=document_id, status="error", summary=doc.error_message)
+    return SummaryResponse(document_id=document_id, status=doc.status, summary=doc.summary or "")
+
+@app.post("/documents/{document_id}/summary")
+async def save_summary(document_id: str, req: SummarySaveRequest):
+    doc = store.get(document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    val = validate_summary(req.summary, min_words=int(settings.summary_words_default*0.6), max_words=int(settings.summary_words_default*1.6))
+    store.push_summary_version(document_id, req.summary, note="manual_save", validation=val)
+    return {"ok": True, "validation": val}
+
+@app.post("/documents/{document_id}/summarize")
+async def regenerate_summary(document_id: str, req: SummarizeRequest):
+    doc = store.get(document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    try:
+        text = parse_file(doc.path)
+        chunks = chunk_text(text)
+        vstore.upsert_document(document_id, chunks)
+
+        seed_val = int(req.seed) if req.seed is not None else int(time.time() * 1000) % 1_000_000
+        summary = summarizer.summarize(
+            chunks,
+            target_words=req.target_words,
+            mode=req.mode,
+            temperature=req.temperature,
+            seed=seed_val,
+        )
+        val = validate_summary(summary, min_words=int(req.target_words*0.6), max_words=int(req.target_words*1.6))
+        store.push_summary_version(document_id, summary, note=f"regen_{req.mode}_{req.target_words}_seed{seed_val}", validation=val)
+        return {"ok": True, "validation": val, "summary": summary, "seed": seed_val}
+    except Exception as e:
+        log.exception("Regenerate failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/documents/{document_id}/summary/validate")
+async def validate_summary_route(document_id: str):
+    doc = store.get(document_id)
+    if not doc or not doc.summary:
+        raise HTTPException(status_code=404, detail="not_found_or_empty")
+    val = validate_summary(doc.summary, min_words=int(settings.summary_words_default*0.6), max_words=int(settings.summary_words_default*1.6))
+    return {"ok": True, "validation": val}
+
+@app.get("/documents/{document_id}/entities", response_model=EntitiesResponse)
+async def get_entities(document_id: str):
+    doc = store.get(document_id)
+    if not doc or not doc.summary:
+        return EntitiesResponse(status="pending", entities=None)
+    ents = extract_entities(doc.summary)
+    return EntitiesResponse(status="ready", entities=ents)
+
+@app.post("/documents/{document_id}/entities")
+async def save_entities(document_id: str, req: EntitiesSaveRequest):
+    doc = store.get(document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    # Accept and no-op (in-memory only)
+    return {"ok": True}
+
+@app.get("/documents/{document_id}/summary/versions")
+async def list_versions(document_id: str):
+    doc = store.get(document_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    items = []
+    for idx, v in enumerate(doc.versions):
+        items.append({
+            "index": idx,
+            "created_at": v.created_at,
+            "note": v.note,
+            "validation": v.validation,
+            "word_count": (v.validation or {}).get("word_count")
+        })
+    return items
+
+@app.post("/documents/{document_id}/summary/rollback")
+async def rollback(document_id: str, version_index: int = 0):
+    ok = store.rollback_summary(document_id, version_index)
+    if not ok:
+        raise HTTPException(status_code=404, detail="rollback_failed")
+    return {"ok": True}
+
+@app.post("/qa", response_model=QAResponse)
+async def qa_route(req: QARequest):
+    result = qa.answer(question=req.question, top_k=5)
+    val = validate_answer(result["answer"], result.get("contexts", []))
+    return QAResponse(answer=result["answer"], sources=result.get("sources", []), validation=val)
+
+backend/core/config.py
+from __future__ import annotations
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    app_env: str = "dev"
+    api_host: str = "127.0.0.1"
+    api_port: int = 8000
+
+    # Comma separated origins, or "*" for all
+    cors_origins: str = "*"
+
+    summary_words_default: int = 350
+
+    # Vector store
+    use_pgvector: int = 0
+    database_url: str | None = None
+    pgvector_dim: int = 384
+
+    # LLM (optional)
+    llm_provider: str | None = None
+    openai_api_key: str | None = None
+    openai_model: str = "gpt-4o-mini"
+    openai_base_url: str | None = None
+    openai_api_version: str | None = None
+
+    def parsed_cors(self) -> List[str]:
+        if not self.cors_origins or self.cors_origins == "*":
+            return ["*"]
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+
+settings = Settings()
+
+Final checklist to go live with pgvector
+
+Run SQL once in your DB:
+
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE TABLE IF NOT EXISTS chunks (
+  doc_id    TEXT NOT NULL,
+  chunk_idx INT  NOT NULL,
+  content   TEXT NOT NULL,
+  embedding VECTOR(384) NOT NULL,
+  PRIMARY KEY (doc_id, chunk_idx)
+);
+CREATE INDEX IF NOT EXISTS idx_chunks_embedding_ivf
+  ON chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+ANALYZE chunks;
+
+
+Set .env:
+
+USE_PGVECTOR=1
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@127.0.0.1:5432/mydb
+PGVECTOR_DIM=384
+
+
+pip install -r requirements.txt
+
+Restart the API + UI and re-upload/regenerate to populate Postgres.
+
+ChatGPT can make mistakes. Check important info. See Cookie Preferences.
+
+.
